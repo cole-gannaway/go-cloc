@@ -34,18 +34,18 @@ type CLIArgs struct {
 func ParseArgsFromCLI() CLIArgs {
 
 	// mandatory arguments
-	modeArg := flag.String("devops", LOCAL, "flag : <GitHub>||<AzureDevOps>||<Bitbucket>||<GitLab>||<File>")
+	modeArg := flag.String("devops", LOCAL, "GitHub, AzureDevOps, Bitbucket, GitLab, or Local")
 	accessTokenArg := flag.String("accessToken", "", "Your DevOps personal access token used for discovering and downloading repositories in your organization")
 	organizationArg := flag.String("organization", "", "Your DevOps organization name")
 	// optional arguments
-	logLevelArg := flag.String("log-level", "INFO", "Log level (DEBUG, INFO, WARN, ERROR)")
-	localScanFilePathArg := flag.String("local-file-path", "", "Path to your local file or directory that you want to scan")
-	ignoreFilePathArg := flag.String("ignore-file", "", "(Optional) Path to your ignore file to exclude directories and files. Please see the README.md for how to format your ignore configuration")
-	excludeRepositoriesFilePathArg := flag.String("exclude-repositories-file", "", "(Optional) Path to your exclude repositories file to exclude repositories. Please see the README.md for how to format your exclude repositories configuration")
-	includeRepositoriesFilePathArg := flag.String("include-repositories-file", "", "(Optional) Path to your include repositories file to include repositories. Please see the README.md for how to format your include repositories configuration")
-	cloneRepoUsingZipArg := flag.Bool("clone-repo-using-zip", false, "(Optional) Flag to clone repositories using zip files instead of git clone for faster downloads. Default is false. For Github, a fine-grained token is required for private repositories")
-	dumpCSVsArg := flag.Bool("dump-csvs", true, "(Optional) Flag to output CSV files. Default is true, but can be set to false to disable file dumps")
-	resultsDirectoryPathArg := flag.String("results-directory-path", "", "(Optional) Path to a new directory for storing the results. By default the tool will create one")
+	logLevelArg := flag.String("log-level", "INFO", "Log level - DEBUG, INFO, WARN, ERROR")
+	localScanFilePathArg := flag.String("local-file-path", "", "Path to youthe local file or directory that you wish to scan")
+	ignoreFilePathArg := flag.String("ignore-file", "", "Path to your ignore file. Defines directories and files to exclude when scanning. Please see the README.md for how to format your ignore configuration")
+	excludeRepositoriesFilePathArg := flag.String("exclude-repositories-file", "", "Path to your exclude repositories file. Defines repositories to exclude, all others will be included. Please see the README.md for how to format your exclude repositories configuration")
+	includeRepositoriesFilePathArg := flag.String("include-repositories-file", "", "Path to your include repositories file. Defines repositories to include, all others will be excluded. Please see the README.md for how to format your include repositories configuration")
+	cloneRepoUsingZipArg := flag.Bool("clone-repo-using-zip", false, "When true, repositories are downloaded as zip files instead of git clone to drastically improve performance. Default is false. This is a BETA feature and has not been extensively tested")
+	dumpCSVsArg := flag.Bool("dump-csvs", true, "When false, disables csv file dumps. DEBUG logging available to still see csv results in logs.")
+	resultsDirectoryPathArg := flag.String("results-directory-path", "", "Path to a new directory for storing the results. Default the tool will create one based on the start time")
 
 	// parse the CLI arguments
 	flag.Parse()

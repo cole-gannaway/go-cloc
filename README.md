@@ -2,9 +2,11 @@
 
 ## Overview
 
-This tool simplifies the process of obtaining an accurate Lines of Code (LOC) count for an organization's DevOps platform. It can automatically discover repositories and calculate the total LOC with a single executable.
+This tool simplifies the process of obtaining an accurate Lines of Code (LOC) count for an organization's DevOps platform. It can automatically discover repositories and quickly calculate the total LOC with a single executable. 
 
-Please download the appropriate [artifact]() for your platform.
+It is also **significantly more performant** than the [cloc](https://github.com/AlDanial/cloc) tool. See bottom for comparisons
+
+Please download the appropriate [artifact](https://github.com/cole-gannaway/go-cloc/releases) for your platform.
 
 Simply run the below command to discover all repositories in your **DevOps Organization**.
 ```sh
@@ -23,6 +25,7 @@ This will output the total Lines of Code (LOC) count for the entire organization
 2024/09/29 17:37:05 [INFO] 0 repos failed to scan.
 2024/09/29 17:37:05 [INFO] Total LOC results can be found  AAA-combined-total-lines.csv
 2024/09/29 17:37:05 [INFO] Total LOC for  MyExampleOrganization  is  23005
+23005
 ```
 
 ## Requirements
@@ -35,25 +38,25 @@ prompt> ./go-cloc --help
 -  `-accessToken`
        Your DevOps personal access token used for discovering and downloading repositories in your organization
 -  `-clone-repo-using-zip`
-       (Optional) Flag to clone repositories using zip files instead of git clone for faster downloads. Default is false.
+       When true, repositories are downloaded as zip files instead of git clone to drastically improve performance. Default is false. This is a BETA feature and has not been extensively tested
 -  `-devops`
-       flag : <GitHub>||<AzureDevOps>||<Bitbucket>||<GitLab>||<File> (default "Local")
+       GitHub, AzureDevOps, Bitbucket, GitLab, or Local (default "Local")
 -  `-dump-csvs`
-       (Optional) Flag to output CSV files. Default is true, but can be set to false to disable file dumps (default true)
+       When false, disables csv file dumps. DEBUG logging available to still see csv results in logs. (default true)
 -  `-exclude-repositories-file`
-       (Optional) Path to your exclude repositories file to exclude repositories. Please see the README.md for how to format your exclude repositories configuration
+       Path to your exclude repositories file. Defines repositories to exclude, all others will be included. Please see the README.md for how to format your exclude repositories configuration
 -  `-ignore-file`
-       (Optional) Path to your ignore file to exclude directories and files. Please see the README.md for how to format your ignore configuration
+       Path to your ignore file. Defines directories and files to exclude when scanning. Please see the README.md for how to format your ignore configuration
 -  `-include-repositories-file`
-       (Optional) Path to your include repositories file to include repositories. Please see the README.md for how to format your include repositories configuration
+       Path to your include repositories file. Defines repositories to include, all others will be excluded. Please see the README.md for how to format your include repositories configuration
 -  `-local-file-path`
-       Path to your local file or directory that you want to scan
+       Path to youthe local file or directory that you wish to scan
 -  `-log-level`
-       Log level (DEBUG, INFO, WARN, ERROR) (default "INFO")
+       Log level - DEBUG, INFO, WARN, ERROR (default "INFO")
 -  `-organization`
        Your DevOps organization name
 -  `-results-directory-path`
-       (Optional) Path to a new directory for storing the results. By default the tool will create one
+       Path to a new directory for storing the results. Default the tool will create one based on the start time
 
 ## Examples
 Github
