@@ -4,7 +4,10 @@
 
 This tool simplifies the process of obtaining an accurate Lines of Code (LOC) count for an organization's DevOps platform. It can automatically discover repositories and quickly calculate the total LOC with a single executable. 
 
-It is also **significantly more performant** than the [cloc](https://github.com/AlDanial/cloc) tool. See bottom for comparisons
+It is also **significantly more performant** than the [cloc](https://github.com/AlDanial/cloc) tool. See [performance benchmark](#performance-benchmarks) for comparisons.
+
+
+### Usage
 
 Please download the appropriate [artifact](https://github.com/cole-gannaway/go-cloc/releases) for your platform.
 
@@ -28,12 +31,22 @@ This will output the total Lines of Code (LOC) count for the entire organization
 23005
 ```
 
+## Examples
+Using **Github** as the DevOps platform
+```sh
+./go-cloc --devops GitHub --organization MyExampleOrganization --accessToken abcdefg1234 
+```
+**Local** scan of a single file
+```sh
+./go-cloc main.js 
+```
+
 ## Requirements
-1. An **Access Token** for your appropriate DevOps platform (GitHub, Azure DevOps, GitLab, or Bitbucket) with **read** access for each of the repositories within the organization.
+1. An **Access Token** for your appropriate DevOps platform (GitHub, Azure DevOps, GitLab, or Bitbucket) with **read** access for each of the repositories within the organization. See [below](#personal-access-tokens) for more details.
 
 ## Options
 ```sh
-prompt> ./go-cloc --help
+./go-cloc --help
 ```
 -  `-accessToken`
        Your DevOps personal access token used for discovering and downloading repositories in your organization
@@ -58,23 +71,11 @@ prompt> ./go-cloc --help
 -  `-results-directory-path`
        Path to a new directory for storing the results. Default the tool will create one based on the start time
 
-## Examples
-Github
-```sh
-prompt> ./go-cloc --devops GitHub --organization MyExampleOrganization --accessToken abcdefg1234 
-```
-Local
-```sh
-prompt> ./go-cloc main.js 
-```
-## Extensibility
-The tool will return an exit code of the total lines of code (LOC) count if successful, for example `103230`. If it fails, it will return an exit code of `-1`.This allows for easy integration with scripts or other 3rd party tools.
-
 ## Ignore Files
 
 The ignore file is a simple text file used to exclude certain directories and files from processing. You can use a wildcard (`*`) to match patterns, similar to regular expressions. However, you can only use one `*` wildcard at a time. Make sure to place your ignore patterns in the ignore file, one per line, to apply them effectively.
 
-This same configuration format applies to **exclude** or **include** repositories using the **devops** flag. Note: if using the `--devops` flag, these patterns will apply to all repositories.
+This same configuration format applies to ***exclude*** or ***include*** repositories when using the `--devops` flag. Note: if using the `--devops` flag, these patterns will apply to all repositories.
 
 - To ignore all files in a specific directory:
 
@@ -82,7 +83,7 @@ This same configuration format applies to **exclude** or **include** repositorie
 /path/to/directory/*
 ```
 
-- To ignore all `.log` and `.js` files:
+- To ignore all files ending in `.log` or `.js`:
 ```sh
 *.log
 *.js
@@ -139,3 +140,28 @@ Personal Access Tokens (PATs) are used to authenticate and authorize access to y
 4. Provide a name and expiration date for the token.
 5. Select the scopes **Repository** to **Read**.to grant the necessary permissions.
 6. Click **Create** and copy the token for use.
+
+## Extensibility
+If successful, the tool will print the total lines of code (LOC) count on its own line. See below for an example. If it fails, it will return a non-zero exit code for easy integration with scripts or other 3rd party tools.
+```sh
+# Below shows the final LOC outputted on its own line for ease of use
+2024/09/29 17:37:05 [INFO] Total LOC results can be found  AAA-combined-total-lines.csv
+2024/09/29 17:37:05 [INFO] Total LOC for  MyExampleOrganization  is  23005
+# Example final line below
+23005
+```
+
+## Performance Benchmarks
+
+```sh
+# Scanning 1 Billion Lines of Code
+
+# go-cloc finished in < 5s
+time ./go-cloc --local-file-path one-billion-loc-test 
+3.9s user 0.72s system 93% cpu 4.976 total
+
+# cloc finished in ~2.5 minutes
+time cloc one-billion-loc-test
+128.48s user 4.22s system 96% cpu 2:17.72 total
+
+```
