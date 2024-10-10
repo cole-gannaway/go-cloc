@@ -1,5 +1,12 @@
 package scanner
 
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"go-cloc/logger"
+)
+
 type LanguageInfo struct {
 	LineComments      []string
 	MultiLineComments [][]string
@@ -65,7 +72,7 @@ var Languages = map[string]LanguageInfo{
 	"HTML": {
 		LineComments:      []string{},
 		MultiLineComments: [][]string{{"<!--", "-->"}},
-		Extensions:        []string{".html", ".htm", ".cshtml", ".vbhtml", ".aspx", ".ascx", ".rhtml", ".erb", ".shtml", ".shtm", "cmp"},
+		Extensions:        []string{".html", ".htm", ".cshtml", ".vbhtml", ".aspx", ".ascx", ".rhtml", ".erb", ".shtml", ".shtm", ".cmp"},
 	},
 	"Java": {
 		LineComments:      []string{"//"},
@@ -203,4 +210,23 @@ func LookupByExtension(ext string) (string, LanguageInfo, bool) {
 		}
 	}
 	return "", LanguageInfo{}, false
+}
+
+func PrintLanguages() {
+	logger.Info("Supported Languages:")
+	// Create a buffer to hold the JSON data
+	var buf bytes.Buffer
+
+	// Create a new JSON encoder and set SetEscapeHTML to false
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "  ")
+	// Encode the map to JSON
+	if err := encoder.Encode(Languages); err != nil {
+		logger.Error("Error encoding JSON: ", err)
+		logger.LogStackTraceAndExit(err)
+	}
+
+	// Print the JSON string
+	fmt.Println(buf.String())
 }

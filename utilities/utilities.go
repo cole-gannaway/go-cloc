@@ -33,6 +33,8 @@ type CLIArgs struct {
 
 func ParseArgsFromCLI() CLIArgs {
 
+	// print out arguments
+	printLanguagesArg := flag.Bool("print-languages", false, "Prints out the supported languages, file suffixes, and comment configurations. Does not run the tool.")
 	// mandatory arguments
 	modeArg := flag.String("devops", LOCAL, "GitHub, AzureDevOps, Bitbucket, GitLab, or Local")
 	accessTokenArg := flag.String("accessToken", "", "Your DevOps personal access token used for discovering and downloading repositories in your organization")
@@ -51,6 +53,7 @@ func ParseArgsFromCLI() CLIArgs {
 	flag.Parse()
 
 	// dereference all CLI args to make it easier to use
+	printLanguages := *printLanguagesArg
 	logLevel := *logLevelArg
 	mode := *modeArg
 	localScanFilePath := *localScanFilePathArg
@@ -74,6 +77,12 @@ func ParseArgsFromCLI() CLIArgs {
 	logger.Debug("Mode: ", mode)
 	logger.Debug("clone-repo-using-zip: ", cloneRepoUsingZip)
 	logger.Debug("dump-csvs: ", dumpCSVs)
+
+	// print out languages
+	if printLanguages {
+		scanner.PrintLanguages()
+		os.Exit(0)
+	}
 
 	// validate mandatory arguments
 	logger.Debug("Validating mandatory arguments")
