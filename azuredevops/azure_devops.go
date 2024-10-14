@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"go-cloc/devops"
 	"go-cloc/logger"
+	"go-cloc/utilities"
 	"io"
 	"log"
 	"net/http"
@@ -18,19 +19,53 @@ type response struct {
 	Value []item `json:"value"`
 }
 
-func CreateCloneURLAzureDevOps(accessToken string, organization string, projectName string, repoName string) string {
-	return "https://" + accessToken + "@dev.azure.com/" + organization + "/" + projectName + "/_git/" + repoName
+const defaultBaseUrl = "dev.azure.com"
+
+// Example URL: https://oauth2:accessToken@dev.azure.com/organization/projectName/_git/repoName
+func CreateCloneURLAzureDevOps(accessToken string, organization string, projectName string, repoName string, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://" + accessToken + "@" + baseUrl + "/" + organization + "/" + projectName + "/_git/" + repoName
 }
 
-func CreateZipURLAzureDevOps(organization string, projectName string, repoName string, defaultBranch string) string {
-	return "https://dev.azure.com/" + organization + "/" + projectName + "/_apis/git/repositories/" + repoName + "/items/items?path=/&versionDescriptor[versionOptions]=0&versionDescriptor[versionType]=0&versionDescriptor[version]=" + defaultBranch + "&resolveLfs=true&$format=zip&api-version=5.0&download=true"
+// Example URL: https://dev.azure.com/organization/projectName/_apis/git/repositories/repoName/items/items?path=/&versionDescriptor[versionOptions]=0&versionDescriptor[versionType]=0&versionDescriptor[version]=defaultBranch&resolveLfs=true&$format=zip&api-version=5.0&download=true
+func CreateZipURLAzureDevOps(organization string, projectName string, repoName string, defaultBranch string, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://" + baseUrl + "/" + organization + "/" + projectName + "/_apis/git/repositories/" + repoName + "/items/items?path=/&versionDescriptor[versionOptions]=0&versionDescriptor[versionType]=0&versionDescriptor[version]=" + defaultBranch + "&resolveLfs=true&$format=zip&api-version=5.0&download=true"
 }
 
-func DiscoverReposAzureDevOps(organization string, accessToken string) []devops.RepoInfo {
-	apiURL := "https://dev.azure.com/" + organization + "/_apis/projects?api-version=7.0"
+// Example URL: https://dev.azure.com/organization/_apis/projects?api-version=7.0
+func CreateDiscoverProjectsURLAzureDevOps(organization string, pageNum int, pageSize int, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://" + baseUrl + "/" + organization + "/_apis/projects?api-version=7.0"
+}
+
+// Example URL: https://dev.azure.com/organization/projectName/_apis/git/repositories?api-version=7.0
+func CreateDiscoverRepositoriesURLAzureDevOps(organization string, projectName string, pageNum int, pageSize int, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://" + baseUrl + "/" + organization + "/" + projectName + "/_apis/git/repositories?api-version=7.0"
+}
+
+func DiscoverReposAzureDevOps(organization string, accessToken string, devopsBaseUrlOverride string, useHttps bool) []devops.RepoInfo {
+	discoverProjectsUrl := CreateDiscoverProjectsURLAzureDevOps(organization, 1, 100, devopsBaseUrlOverride, useHttps)
 
 	// Create a new HTTP request
-	req, err := http.NewRequest("GET", apiURL, nil)
+	req, err := http.NewRequest("GET", discoverProjectsUrl, nil)
 	if err != nil {
 		log.Fatalf("Failed to create HTTP request: %v", err)
 	}
@@ -71,9 +106,9 @@ func DiscoverReposAzureDevOps(organization string, accessToken string) []devops.
 		projectName := item.Name
 		logger.Debug("Project Name:", projectName)
 
-		apiURL := "https://dev.azure.com/" + organization + "/" + projectName + "/_apis/git/repositories?api-version=7.0"
+		discoverRepositoriesUrl := CreateDiscoverRepositoriesURLAzureDevOps(organization, projectName, 1, 100, devopsBaseUrlOverride, useHttps)
 		// Create a new HTTP request
-		req, err := http.NewRequest("GET", apiURL, nil)
+		req, err := http.NewRequest("GET", discoverRepositoriesUrl, nil)
 		if err != nil {
 			log.Fatalf("Failed to create HTTP request: %v", err)
 		}

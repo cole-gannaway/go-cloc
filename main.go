@@ -43,7 +43,7 @@ func main() {
 
 	// Discover repositories
 	logger.Info("Discovering repositories...")
-	repositoryInfoArr := DiscoverRepositories(args.Mode, args.AccessToken, args.Organization)
+	repositoryInfoArr := DiscoverRepositories(args.Mode, args.AccessToken, args.Organization, args.DevopsBaseUrlOverride, args.UseHTTPS)
 	initialNumReposFound := len(repositoryInfoArr)
 	logger.Info("Discovered ", initialNumReposFound, " repositories in ", args.Organization)
 
@@ -94,11 +94,10 @@ func main() {
 			// print status
 			logger.Info((index + 1), "/", len(fitleredRepoInfoArr), " cloning respository ", repoInfo.RepositoryName, "...")
 
-			// TODO: add support for cloning using zip for more platforms
 			if args.CloneRepoUsingZip {
 				logger.Debug("Cloning using zip")
 
-				clonedRepoDir = CloneRepoUsingZip(args.Mode, args.AccessToken, repoInfo)
+				clonedRepoDir = CloneRepoUsingZip(args.Mode, args.AccessToken, repoInfo, args.DevopsBaseUrlOverride, args.UseHTTPS)
 				if clonedRepoDir == "" {
 					// Failed to clone repo, save metadata for later reporting
 					failedRepos = append(failedRepos, repoInfo)
@@ -109,7 +108,7 @@ func main() {
 			} else {
 				logger.Debug("Cloning using git clone")
 				// clone repo
-				clonedRepoDir = CloneRepo(args.Mode, args.AccessToken, args.Organization, repoInfo)
+				clonedRepoDir = CloneRepo(args.Mode, args.AccessToken, args.Organization, repoInfo, args.DevopsBaseUrlOverride, args.UseHTTPS)
 
 				// Handle failed repos
 				if clonedRepoDir == "" {
@@ -208,22 +207,22 @@ func main() {
 	fmt.Println(totalLoc)
 }
 
-func CloneRepoUsingZip(mode string, accessToken string, repoInfo devops.RepoInfo) string {
+func CloneRepoUsingZip(mode string, accessToken string, repoInfo devops.RepoInfo, devopsBaseUrlOverride string, useHttps bool) string {
 	clonedRepoDir := ""
 	if mode == utilities.GITHUB {
 		// clone repo
-		defaultBranch := github.DiscoverDefaultBranchForRepoGithub(repoInfo.OrganizationName, repoInfo.RepositoryName, accessToken)
-		zipUrl := github.CreateZipURLGithub(repoInfo.OrganizationName, repoInfo.RepositoryName, defaultBranch)
+		defaultBranch := github.DiscoverDefaultBranchForRepoGithub(repoInfo.OrganizationName, repoInfo.RepositoryName, accessToken, devopsBaseUrlOverride, useHttps)
+		zipUrl := github.CreateZipURLGithub(repoInfo.OrganizationName, repoInfo.RepositoryName, defaultBranch, devopsBaseUrlOverride, useHttps)
 		clonedRepoDir = clone.DonwloadAndUnzip(zipUrl, repoInfo.RepositoryName, accessToken)
 	} else if mode == utilities.AZUREDEVOPS {
-		zipUrl := azuredevops.CreateZipURLAzureDevOps(repoInfo.OrganizationName, repoInfo.ProjectName, repoInfo.RepositoryName, repoInfo.DefaultBranch)
+		zipUrl := azuredevops.CreateZipURLAzureDevOps(repoInfo.OrganizationName, repoInfo.ProjectName, repoInfo.RepositoryName, repoInfo.DefaultBranch, devopsBaseUrlOverride, useHttps)
 		clonedRepoDir = clone.DonwloadAndUnzip(zipUrl, repoInfo.RepositoryName, accessToken)
 	} else if mode == utilities.GITLAB {
-		zipUrl := gitlab.CreateZipURLGitLab(repoInfo.OrganizationName, repoInfo.RepositoryName, repoInfo.DefaultBranch)
+		zipUrl := gitlab.CreateZipURLGitLab(repoInfo.OrganizationName, repoInfo.RepositoryName, repoInfo.DefaultBranch, devopsBaseUrlOverride, useHttps)
 		clonedRepoDir = clone.DonwloadAndUnzip(zipUrl, repoInfo.RepositoryName, accessToken)
 	} else if mode == utilities.BITBUCKET {
 		logger.Warn("Cloning using zip is not tested for Bitbucket yet. It may not work as expected.")
-		zipUrl := bitbucket.CreateZipURLBitbucket(accessToken, repoInfo.OrganizationName, repoInfo.RepositoryName, repoInfo.DefaultBranch)
+		zipUrl := bitbucket.CreateZipURLBitbucket(accessToken, repoInfo.OrganizationName, repoInfo.RepositoryName, repoInfo.DefaultBranch, devopsBaseUrlOverride, useHttps)
 		clonedRepoDir = clone.DonwloadAndUnzip(zipUrl, repoInfo.RepositoryName, accessToken)
 	} else {
 		logger.Error("Mode ", mode, " is not supported for cloning using zip")
@@ -232,21 +231,20 @@ func CloneRepoUsingZip(mode string, accessToken string, repoInfo devops.RepoInfo
 	return clonedRepoDir
 }
 
-func CloneRepo(mode string, accessToken string, organization string, repoInfo devops.RepoInfo) string {
+func CloneRepo(mode string, accessToken string, organization string, repoInfo devops.RepoInfo, devopsBaseUrlOverride string, useHttps bool) string {
 	cloneRepoUrl := ""
 	clonedRepoDir := ""
 	if mode == utilities.GITHUB {
-		cloneRepoUrl = github.CreateCloneURLGithub(accessToken, organization, repoInfo.RepositoryName)
+		cloneRepoUrl = github.CreateCloneURLGithub(accessToken, organization, repoInfo.RepositoryName, devopsBaseUrlOverride, useHttps)
 		clonedRepoDir = clone.CloneRepo(cloneRepoUrl, accessToken, repoInfo.RepositoryName)
-
 	} else if mode == utilities.AZUREDEVOPS {
-		cloneRepoUrl = azuredevops.CreateCloneURLAzureDevOps(accessToken, organization, repoInfo.ProjectName, repoInfo.RepositoryName)
+		cloneRepoUrl = azuredevops.CreateCloneURLAzureDevOps(accessToken, organization, repoInfo.ProjectName, repoInfo.RepositoryName, devopsBaseUrlOverride, useHttps)
 		clonedRepoDir = clone.CloneRepoAzureDevOps(cloneRepoUrl, accessToken, repoInfo.RepositoryName)
 	} else if mode == utilities.GITLAB {
-		cloneRepoUrl = gitlab.CreateCloneURLGitLab(accessToken, organization, repoInfo.RepositoryName)
+		cloneRepoUrl = gitlab.CreateCloneURLGitLab(accessToken, organization, repoInfo.RepositoryName, devopsBaseUrlOverride, useHttps)
 		clonedRepoDir = clone.CloneRepo(cloneRepoUrl, accessToken, repoInfo.RepositoryName)
 	} else if mode == utilities.BITBUCKET {
-		cloneRepoUrl = bitbucket.CreateCloneURLBitbucket(accessToken, organization, repoInfo.RepositoryName)
+		cloneRepoUrl = bitbucket.CreateCloneURLBitbucket(accessToken, organization, repoInfo.RepositoryName, devopsBaseUrlOverride, useHttps)
 		clonedRepoDir = clone.CloneRepo(cloneRepoUrl, accessToken, repoInfo.RepositoryName)
 	} else {
 		logger.Error("Mode ", mode, " is not supported")
@@ -254,19 +252,19 @@ func CloneRepo(mode string, accessToken string, organization string, repoInfo de
 	return clonedRepoDir
 }
 
-func DiscoverRepositories(mode string, accessToken string, organization string) []devops.RepoInfo {
+func DiscoverRepositories(mode string, accessToken string, organization string, devopsBaseUrlOverride string, useHttps bool) []devops.RepoInfo {
 	repositoryInfoArr := []devops.RepoInfo{}
 	if mode == utilities.LOCAL {
 		repositoryInfo := devops.NewRepoInfo("local-org", "", "local", "")
 		repositoryInfoArr = append(repositoryInfoArr, repositoryInfo)
 	} else if mode == utilities.GITHUB {
-		repositoryInfoArr = github.DiscoverReposGithub(organization, accessToken)
+		repositoryInfoArr = github.DiscoverReposGithub(organization, accessToken, devopsBaseUrlOverride, useHttps)
 	} else if mode == utilities.AZUREDEVOPS {
-		repositoryInfoArr = azuredevops.DiscoverReposAzureDevOps(organization, accessToken)
+		repositoryInfoArr = azuredevops.DiscoverReposAzureDevOps(organization, accessToken, devopsBaseUrlOverride, useHttps)
 	} else if mode == utilities.GITLAB {
-		repositoryInfoArr = gitlab.DiscoverReposGitlab(organization, accessToken)
+		repositoryInfoArr = gitlab.DiscoverReposGitlab(organization, accessToken, devopsBaseUrlOverride, useHttps)
 	} else if mode == utilities.BITBUCKET {
-		repositoryInfoArr = bitbucket.DiscoverReposBitbucket(organization, accessToken)
+		repositoryInfoArr = bitbucket.DiscoverReposBitbucket(organization, accessToken, devopsBaseUrlOverride, useHttps)
 	} else {
 		logger.LogStackTraceAndExit("Mode " + mode + " is not supported")
 	}

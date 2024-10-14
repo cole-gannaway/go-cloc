@@ -54,6 +54,8 @@ Using **Github** as the DevOps platform
        When true, repositories are downloaded as zip files instead of git clone to drastically improve performance. Default is false. This is a BETA feature and has not been extensively tested
 -  `--devops`
        GitHub, AzureDevOps, Bitbucket, GitLab, or Local (default "Local")
+-  `--devops-base-url-override`
+       Overrides the base URL for the DevOps provider. Defaults will be "github.com", "dev.azure.com", "bitbucket.org", or "gitlab.com". However, you can override this with your own self-hosted ip or domain
 -  `--dump-csvs`
        When false, disables csv file dumps. DEBUG logging available to still see csv results in logs. (default true)
 -  `--exclude-repositories-file`
@@ -72,6 +74,8 @@ Using **Github** as the DevOps platform
        Prints out the supported languages, file suffixes, and comment configurations. Does not run the tool.
 -  `--results-directory-path`
        Path to a new directory for storing the results. Default the tool will create one based on the start time
+-  `--use-https`
+       When false, uses http instead of https for all HTTP calls. (default true)
 
 ## Ignore Files
 

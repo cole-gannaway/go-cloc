@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"go-cloc/devops"
 	"go-cloc/logger"
+	"go-cloc/utilities"
 	"io"
 	"log"
 	"net/http"
@@ -25,26 +26,46 @@ type response struct {
 	Next *string `json:"next"`
 }
 
-func CreateCloneURLBitbucket(accessToken string, organization string, respository string) string {
-	// Create the URL
-	return "https://x-token-auth:" + accessToken + "@bitbucket.org/" + organization + "/" + respository + ".git"
+const defaultBaseUrl = "bitbucket.org"
+
+// Example URL: https://x-token-auth:accessToken@bitbucket.org/organization/repoName.git
+func CreateCloneURLBitbucket(accessToken string, organization string, respository string, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://x-token-auth:" + accessToken + "@" + baseUrl + "/" + organization + "/" + respository + ".git"
 }
 
-func CreateZipURLBitbucket(accessToken string, organization string, repoName string, defaultBranch string) string {
+// Example URL: https://bitbucket.org/organization/repoName/get/HEAD.zip
+func CreateZipURLBitbucket(accessToken string, organization string, repoName string, defaultBranch string, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
 	logger.Warn("Assuming git repository since using HEAD.zip for the commit")
-	return "https://bitbucket.org/" + organization + "/" + repoName + "/get/HEAD.zip"
+	return httpProtocolSetting + "://" + baseUrl + "/" + organization + "/" + repoName + "/get/HEAD.zip"
 }
 
-func CreateDiscoverURLBitbucket(organization string, pageNum int, pageSize int) string {
-	return "https://api.bitbucket.org/2.0/repositories/" + organization + "?pagelen=" + strconv.Itoa(pageSize) + "&page=" + strconv.Itoa(pageNum)
+// Example URL: https://api.bitbucket.org/2.0/repositories/organization?pagelen=100&page=1
+func CreateDiscoverRepositoriesURLBitbucket(organization string, pageNum int, pageSize int, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://api." + baseUrl + "/2.0/repositories/" + organization + "?pagelen=" + strconv.Itoa(pageSize) + "&page=" + strconv.Itoa(pageNum)
 }
-func DiscoverReposBitbucket(organization string, accessToken string) []devops.RepoInfo {
+
+func DiscoverReposBitbucket(organization string, accessToken string, devopsBaseUrlOverride string, useHttps bool) []devops.RepoInfo {
 	pageSize := 100
 	pageNum := 1
 	repoNames := []devops.RepoInfo{}
 
 	for pageNum != -1 {
-		apiURL := CreateDiscoverURLBitbucket(organization, pageNum, pageSize)
+		apiURL := CreateDiscoverRepositoriesURLBitbucket(organization, pageNum, pageSize, devopsBaseUrlOverride, useHttps)
 		logger.Debug("Discovering repos using url: ", apiURL)
 
 		// Create a new HTTP request

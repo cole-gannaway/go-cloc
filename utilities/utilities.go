@@ -18,17 +18,19 @@ const (
 )
 
 type CLIArgs struct {
-	LogLevel             string
-	Mode                 string
-	LocalScanFilePath    string
-	AccessToken          string
-	Organization         string
-	IgnorePatterns       []string
-	ExcludeRepositories  []string
-	IncludeRepositories  []string
-	CloneRepoUsingZip    bool
-	DumpCSVs             bool
-	ResultsDirectoryPath string
+	LogLevel              string
+	Mode                  string
+	LocalScanFilePath     string
+	AccessToken           string
+	Organization          string
+	IgnorePatterns        []string
+	ExcludeRepositories   []string
+	IncludeRepositories   []string
+	CloneRepoUsingZip     bool
+	DumpCSVs              bool
+	ResultsDirectoryPath  string
+	UseHTTPS              bool
+	DevopsBaseUrlOverride string
 }
 
 func ParseArgsFromCLI() CLIArgs {
@@ -48,6 +50,8 @@ func ParseArgsFromCLI() CLIArgs {
 	cloneRepoUsingZipArg := flag.Bool("clone-repo-using-zip", false, "When true, repositories are downloaded as zip files instead of git clone to drastically improve performance. Default is false. This is a BETA feature and has not been extensively tested")
 	dumpCSVsArg := flag.Bool("dump-csvs", true, "When false, disables csv file dumps. DEBUG logging available to still see csv results in logs.")
 	resultsDirectoryPathArg := flag.String("results-directory-path", "", "Path to a new directory for storing the results. Default the tool will create one based on the start time")
+	useHttpsArg := flag.Bool("use-https", true, "When false, uses http instead of https for all HTTP calls.")
+	devopsBaseUrlOverrideArg := flag.String("devops-base-url-override", "", "Overrides the base URL for the DevOps provider. Defaults will be github.com, dev.azure.com, bitbucket.org, or gitlab.com. However, you can override this with your own self-hosted ip or domain")
 
 	// parse the CLI arguments
 	flag.Parse()
@@ -65,6 +69,8 @@ func ParseArgsFromCLI() CLIArgs {
 	cloneRepoUsingZip := *cloneRepoUsingZipArg
 	dumpCSVs := *dumpCSVsArg
 	resultsDirectoryPath := *resultsDirectoryPathArg
+	useHttps := *useHttpsArg
+	devopsBaseUrlOverride := *devopsBaseUrlOverrideArg
 
 	// set log level
 	logger.SetLogLevel(logger.ConvertStringToLogLevel(logLevel))
@@ -139,18 +145,27 @@ func ParseArgsFromCLI() CLIArgs {
 	logger.Debug("Results Directory Path: ", resultsDirectoryPath)
 
 	args := CLIArgs{
-		LogLevel:             logLevel,
-		Mode:                 mode,
-		LocalScanFilePath:    localScanFilePath,
-		AccessToken:          accessToken,
-		Organization:         organization,
-		IgnorePatterns:       ignorePatterns,
-		ExcludeRepositories:  excludeRepositories,
-		IncludeRepositories:  includeRepositories,
-		CloneRepoUsingZip:    cloneRepoUsingZip,
-		DumpCSVs:             dumpCSVs,
-		ResultsDirectoryPath: resultsDirectoryPath,
+		LogLevel:              logLevel,
+		Mode:                  mode,
+		LocalScanFilePath:     localScanFilePath,
+		AccessToken:           accessToken,
+		Organization:          organization,
+		IgnorePatterns:        ignorePatterns,
+		ExcludeRepositories:   excludeRepositories,
+		IncludeRepositories:   includeRepositories,
+		CloneRepoUsingZip:     cloneRepoUsingZip,
+		DumpCSVs:              dumpCSVs,
+		ResultsDirectoryPath:  resultsDirectoryPath,
+		UseHTTPS:              useHttps,
+		DevopsBaseUrlOverride: devopsBaseUrlOverride,
 	}
 
 	return args
+}
+
+func GetHttpProtocolSetting(useHttps bool) string {
+	if useHttps {
+		return "https"
+	}
+	return "http"
 }

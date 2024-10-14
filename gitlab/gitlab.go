@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"go-cloc/devops"
 	"go-cloc/logger"
+	"go-cloc/utilities"
 	"io"
 	"log"
 	"net/http"
@@ -11,18 +12,37 @@ import (
 	"strings"
 )
 
-func CreateCloneURLGitLab(accessToken string, organization string, respository string) string {
+const defaultBaseUrl = "gitlab.com"
+
+// Example URL: https://oauth2:accessToken@gitlab.com/organization/repoName.git
+func CreateCloneURLGitLab(accessToken string, organization string, respository string, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
 	// Create the URL
-	return "https://oauth2:" + accessToken + "@gitlab.com/" + organization + "/" + respository + ".git"
+	return httpProtocolSetting + "://oauth2:" + accessToken + "@" + baseUrl + "/" + organization + "/" + respository + ".git"
 }
 
-// Discovers projects in a GitLab organization
-func CreateDiscoverURLGitLab(accessToken string, organization string, pageNum int, pageSize int) string {
-	return "https://" + accessToken + "@gitlab.com/api/v4/groups/" + organization + "/projects?per_page=" + strconv.Itoa(pageSize) + "&page=" + strconv.Itoa(pageNum)
+// Example URL: https://accesstoken@gitlab.com/api/v4/groups/organization/projects?per_page=100&page=1
+func CreateDiscoverURLGitLab(accessToken string, organization string, pageNum int, pageSize int, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://" + accessToken + "@" + baseUrl + "/api/v4/groups/" + organization + "/projects?per_page=" + strconv.Itoa(pageSize) + "&page=" + strconv.Itoa(pageNum)
 }
 
-func CreateZipURLGitLab(organization string, repoName string, defaultBranch string) string {
-	return "https://gitlab.com/" + organization + "/" + repoName + "/-/archive/" + defaultBranch + "/" + repoName + "-" + defaultBranch + ".zip"
+// Example URL: https://gitlab.com/organization/repoName/-/archive/defaultBranch/repoName-defaultBranch.zip
+func CreateZipURLGitLab(organization string, repoName string, defaultBranch string, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://" + baseUrl + "/" + organization + "/" + repoName + "/-/archive/" + defaultBranch + "/" + repoName + "-" + defaultBranch + ".zip"
 }
 
 // Define the nested struct types
@@ -31,13 +51,13 @@ type item struct {
 	DefaultBranch string `json:"default_branch"`
 }
 
-func DiscoverReposGitlab(organization string, accessToken string) []devops.RepoInfo {
+func DiscoverReposGitlab(organization string, accessToken string, devopsBaseUrlOverride string, useHttps bool) []devops.RepoInfo {
 	pageSize := 100
 	pageNum := 1
 	repoNames := []devops.RepoInfo{}
 	// pageNum -1 means there are no more pages to discover
 	for pageNum != -1 {
-		apiURL := CreateDiscoverURLGitLab(accessToken, organization, pageNum, pageSize)
+		apiURL := CreateDiscoverURLGitLab(accessToken, organization, pageNum, pageSize, devopsBaseUrlOverride, useHttps)
 		logger.Debug("Discovering repos using url: ", apiURL)
 
 		// Create a new HTTP request

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"go-cloc/devops"
 	"go-cloc/logger"
+	"go-cloc/utilities"
 	"io"
 	"net/http"
 	"strconv"
@@ -20,30 +21,56 @@ type repo struct {
 	DefaultBranch string `json:"default_branch"`
 }
 
-func CreateCloneURLGithub(accessToken string, organization string, repoName string) string {
-	return "https://oauth2:" + accessToken + "@github.com/" + organization + "/" + repoName + ".git"
+const defaultBaseUrl = "github.com"
+
+// Example URL: https://oauth2:accesstoken@github.com/organization/repoName.git
+func CreateCloneURLGithub(accessToken string, organization string, repoName string, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://oauth2:" + accessToken + "@" + baseUrl + "/" + organization + "/" + repoName + ".git"
 }
 
-func CreateZipURLGithub(organization string, repoName string, defaultBranch string) string {
-	return "https://github.com/" + organization + "/" + repoName + "/archive/refs/heads/" + defaultBranch + ".zip"
+// Example URL: https://github.com/organization/repoName/archive/refs/heads/defaultBranch.zip
+func CreateZipURLGithub(organization string, repoName string, defaultBranch string, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://" + baseUrl + "/" + organization + "/" + repoName + "/archive/refs/heads/" + defaultBranch + ".zip"
 }
 
-func CreateGetDefaultBranchURLGitHub(organization string, repoName string) string {
-	return "https://api.github.com/repos/" + organization + "/" + repoName
+// Example URL: https://api.github.com/repos/organization/repoName
+func CreateGetDefaultBranchURLGitHub(organization string, repoName string, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://api." + baseUrl + "/repos/" + organization + "/" + repoName
 }
 
-func CreateDiscoverURLGitHub(organization string, pageNum int, pageSize int) string {
-	return "https://api.github.com/orgs/" + organization + "/repos?per_page=" + strconv.Itoa(pageSize) + "&page=" + strconv.Itoa(pageNum)
+// Example URL: https://api.github.com/orgs/organization/repos?per_page=100&page=1
+func CreateDiscoverReposURLGitHub(organization string, pageNum int, pageSize int, devopsBaseUrlOverride string, useHttps bool) string {
+	httpProtocolSetting := utilities.GetHttpProtocolSetting(useHttps)
+	baseUrl := defaultBaseUrl
+	if devopsBaseUrlOverride != "" {
+		baseUrl = devopsBaseUrlOverride
+	}
+	return httpProtocolSetting + "://api." + baseUrl + "/orgs/" + organization + "/repos?per_page=" + strconv.Itoa(pageSize) + "&page=" + strconv.Itoa(pageNum)
 }
 
-func DiscoverReposGithub(organization string, accessToken string) []devops.RepoInfo {
+func DiscoverReposGithub(organization string, accessToken string, devopsBaseUrlOverride string, useHttps bool) []devops.RepoInfo {
 	pageSize := 100
 	pageNum := 1
 	repoNames := []devops.RepoInfo{}
 
 	// pageNum -1 means there are no more pages to discover
 	for pageNum != -1 {
-		apiURL := CreateDiscoverURLGitHub(organization, pageNum, pageSize)
+		apiURL := CreateDiscoverReposURLGitHub(organization, pageNum, pageSize, devopsBaseUrlOverride, useHttps)
 		logger.Debug("GET: " + apiURL)
 
 		// Create a new HTTP request
@@ -100,10 +127,10 @@ func DiscoverReposGithub(organization string, accessToken string) []devops.RepoI
 	return repoNames
 }
 
-func DiscoverDefaultBranchForRepoGithub(organization string, repoName string, accessToken string) string {
+func DiscoverDefaultBranchForRepoGithub(organization string, repoName string, accessToken string, devopsBaseUrlOverride string, useHttps bool) string {
 	logger.Debug("Getting default branch for ", organization, "/", repoName)
 
-	url := CreateGetDefaultBranchURLGitHub(organization, repoName)
+	url := CreateGetDefaultBranchURLGitHub(organization, repoName, devopsBaseUrlOverride, useHttps)
 	logger.Debug("GET: " + url)
 
 	// Create a new HTTP request
