@@ -36,6 +36,10 @@ Using **Github** as the DevOps platform
 ```sh
 ./go-cloc --devops GitHub --organization MyExampleOrganization --accessToken abcdefg1234 
 ```
+Using a self-hosted **AzureDevOps** as the DevOps platform without HTTPS
+```sh
+./go-cloc --devops AzureDevOps --organization MyExampleOrganization --accessToken abcdefg1234 --use-https=false --devops-base-url-override devops.internal.company.com
+```
 **Local** scan of a single file
 ```sh
 ./go-cloc main.js 
